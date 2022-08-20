@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class ServerStartAndClientConnectionAccept {
 
-    private final String SERVER_ADDR = "myServer";
+    private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8190;
     private DataInputStream in;
     private DataOutputStream out;
@@ -21,19 +21,31 @@ public class ServerStartAndClientConnectionAccept {
             System.out.println("Клиент подключился");
             in = new DataInputStream(socketClient.getInputStream());
             out = new DataOutputStream(socketClient.getOutputStream());
-            Runnable runnable = new Runnable() {
-                public void run() {
-                    try {
-                        readMessage();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
+            readMessage();
             sendMessage();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void readMessage() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        String strIn = in.readUTF();
+                        System.out.println("Полученное от клиента сообщение - " + strIn);
+                        if (strIn.equals("/end")) {
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
     }
 
     private void sendMessage() throws IOException {
@@ -42,19 +54,10 @@ public class ServerStartAndClientConnectionAccept {
             String strOut = scanner.nextLine();
             out.writeUTF(strOut);
             System.out.println("Отправленное клиенту сообщение - " + strOut);
-            if (strOut.equals("/end")){
-                break;
-            }
-        }
-    }
-
-    private void readMessage() throws IOException {
-        while (true) {
-            String strIn = in.readUTF();
-            System.out.println("Полученное от клиента сообщение - " + strIn);
-            if (strIn.equals("/end")) {
+            if (strOut.equals("/end")) {
                 break;
             }
         }
     }
 }
+

@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class ClientToServerConnection {
 
-    private final String SERVER_ADDR = "myServer";
+    private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8190;
     private DataInputStream in;
     private DataOutputStream out;
@@ -19,15 +19,7 @@ public class ClientToServerConnection {
             System.out.println("Осуществлено подключение Клиента к Серверу");
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
-            Runnable runnable = new Runnable() {
-                public void run() {
-                    try {
-                        readMessage();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
+            readMessage();
             sendMessage();
         } catch (IOException e) {
             e.printStackTrace();
@@ -47,12 +39,22 @@ public class ClientToServerConnection {
     }
 
     private void readMessage() throws IOException {
-        while (true) {
-            String strIn = in.readUTF();
-            System.out.println("Полученное от сервера сообщение - " + strIn);
-            if (strIn.equals("/end")) {
-                break;
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        String strIn = in.readUTF();
+                        System.out.println("Полученное от сервера сообщение - " + strIn);
+                        if (strIn.equals("/end")) {
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        });
+        thread.start();
     }
 }
